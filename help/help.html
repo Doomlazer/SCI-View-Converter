@@ -48,7 +48,7 @@
       both SCI1 & SCI1.1 .pal files can be used.
     </p>
 
-    <h3>Exporting Png</h3>
+    <h3>Exporting as PNG</h3>
     <p>
       This application can also export a single cel or an entire loop to individual .png files. The resulting image files can then be 
       imported in SCICompanion as an "Image Sequence" to quickly build loops by hand in SC. The drawback of this method is that the 
@@ -66,7 +66,7 @@
     </p>
     <p>
       NOTE: This hack was added to <a href="https://github.com/Kawa-oneechan/SCICompanion">Kawa's fork</a> 
-      of SCICompanion sometime between. This is NOT available in the version downloaded from the official <a href="http://scicompanion.com/">scicompanion.com</a> website. 
+      of SCICompanion sometime around 2022. This hack is NOT available in the version downloaded from the official <a href="http://scicompanion.com/">scicompanion.com</a> website. 
       You must download and install <a href="https://github.com/Kawa-oneechan/SCICompanion">a recent Kawa's build</a> for this 
       to work. It includes many other bug fixes over the outdated scicompanion.com version, so it's best to be using the Kawa build anyway.
     </p>
@@ -82,21 +82,23 @@
     <p>
       Some SCI1 Views used merged palettes (correct term?) and will display incorrectly because they depend on another base 
       palette (usually in the room's picture resource). For instance, View 362 from EQ1's Floppy version imports all non-transparency 
-      colors as black, because the view's embedded palette doesn't define the first 32-ish colors (see image below).
+      colors as black, because the view's embedded palette doesn't define the first 32 colors common between all views in EQ1 (see image 
+      below).
     </p>
     <p><img src="./palIssue.png"  width="600" alt="an SCI1 view imported with an incomplete palette."></p>
     <p>
       This problem is not corrected by importing a complete palette using this program. This is because the colors are still mapped 
-      to black in the replaced palette.
+      to black in the replaced palette. Also, since the those intial colors can vary between games (or even versions of the same game) 
+      it's difficult to create a perfect fix for this issue.
     </p>
     <p> 
-      Currently the fix for this issue is to copy the missing palette colors into the view's embedded palette BEFORE exporting 
-      the view from SCICompanion. 
+      Currently, the best solution for this issue is to copy the missing palette colors into the view's embedded palette BEFORE 
+      exporting the view from SCICompanion.
     </p>
 
     <h2>Just for Fun:</h2>
     <p>
-      An imported view can be displayed as ASCII hex characters if desired. This has no effect on either view or png exports.
+      An imported view can be displayed as ASCII hex characters instead of pixels. This has no effect on either view or png exports.
     </p>
   </div>
 </body>
