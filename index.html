@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SCI0/SCI1 View Converter</title>
+</head>
+<style type="text/css">
+  @font-face {
+     font-family: SQ3font;
+     src: url(help/SQ3n001.ttf);
+  }
+  
+  * {
+     font-family: SQ3font;
+     font-size: 20px;
+     box-sizing: border-box;
+  }
+  
+  .column {
+    float: left;
+    padding: 10px;
+    height: 380px;
+  }
+  
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+</style>
+<body>
+  <div class="row">
+    <div class="column" style="width: 350">
+
+      <canvas id="myCanvas" width="640" height="380" style="background: rgb(240, 240, 240);border:4px solid #d3d3d3;">
+      Your browser does not support the HTML5 canvas tag.</canvas>
+  
+      <script type="text/javascript" src="./js/sci0Import.js"></script>
+      <script type="text/javascript" src="./js/sci1Import.js"></script>
+      <script type="text/javascript" src="./js/sci0Export.js"></script>
+      <script type="text/javascript" src="./js/sci1Export.js"></script>
+      <script type="text/javascript" src="./js/palette.js"></script>
+      <script type="text/javascript" src="./js/draw.js"></script>
+      <script type="text/javascript" src="./js/exportPng.js"></script>
+      <script charset="ISO-8859-1">
+
+      const c = document.getElementById("myCanvas");
+      const ctx = c.getContext("2d");
+
+      fileHeader = [];
+      var animateIntervalID = 0;
+      var pixelWidth = 2;
+      var pixelHeight = 2;
+      var sciPalette = [];
+      var targetPalette = [];
+      var cels = [];
+      var loops = [];
+      var mirrorMask = 0;
+      var isSCI1 = 0;
+      var xP = c.width/2; 
+      var yP = 300; //c.height/2;
+      var viewName; 
+      var hexFX = 1;
+      var hexCyc = 0;
+      var hexCycToggle = 1;
+      var hexFntSize = 6;
+      var showPalette = 1;
+      var animationSpeed = 200;
+
+      function download(data, filename, type) {
+        var file = new Blob([data], {type: type});
+        if (window.navigator.msSaveOrOpenBlob) // IE10+
+          window.navigator.msSaveOrOpenBlob(file, filename);
+        else { // Others
+          var a = document.createElement("a"),
+              url = URL.createObjectURL(file);
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function() {
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);  
+          }, 0); 
+        }
+      }
+
+      function importFile(importPal) {
+        var input = document.createElement('input');
+        input.type = 'file';
+
+        input.onchange = e => {
+          var file = e.target.files[0];
+          const reader = new FileReader();
+
+          reader.addEventListener(
+            "load",
+            () => {
+              console.log("importing file: " + file.name);
+              var fExt = file.name.split(".");
+              var fData = new Uint8Array(reader.result); 
+              if (importPal) {
+                //import palette instead of view
+                if (fExt[1] == 'v56') {
+                  viewName = fExt[0];
+                  alert("Sorry, extracting palette from a SCI1 view is not yet supported.");
+                } else if ((fExt[1] == 'pal')) {
+                  processPal(fData.slice(2), 0);
+                } else {
+                  alert('Invalid file:\x0AThis app can only extract palettes from ".pal" or ".v56" files.'); 
+                } 
+              } else {
+                // import view
+                viewName = fExt[1];
+                ctx.clearRect(0, 0, c.width, c.height);
+                fileHeader = fData.slice(0, 2);
+                if (fExt[1] != 'v56') {
+                  // TODO: Add SCI1.1 support
+                  isSCI1 = 0;
+                  processSCI0(fData.slice(2));
+                } else {
+                  viewName = fExt[0]; // use first half of filename instead
+                  isSCI1 = 1;
+                  processSCI1(fData.slice(2));
+                }
+                document.getElementById("selLoop").max = loops.length - 1;
+                var tempCel = loops[0];
+                document.getElementById("selCel").max = tempCel.length - 1;
+                document.getElementById("selLoop").value = 0;
+                document.getElementById("selCel").value = 0;
+                updateDraw();
+              }
+            },
+            false,
+          );
+          if (file) {
+            reader.readAsArrayBuffer(file);
+          }
+        }
+        input.click();
+      }
+
+      function UseDefaultSCI0() {
+        processPal(0, 1);
+      }
+
+      function to16Bit(array) {
+        var a = array[0];
+        var b = array[1];
+        return a + (b*256);
+      }
+
+      function sLoopChanged() {
+        var tempCel = loops[document.getElementById("selLoop").value];
+        document.getElementById("selCel").max = tempCel.length - 1;
+        document.getElementById("selCel").value = 0; // set cel 0 on loop change
+        updateDraw();
+      }
+
+      function updateDraw() {
+        var sLoop = parseInt(document.getElementById("selLoop").value, 10);
+        var sCel = parseInt(document.getElementById("selCel").value, 10);
+        ctx.clearRect(0, 0, c.width, c.height);
+        drawCel(sLoop, sCel, xP, yP);
+        if (showPalette) {
+          ctx.font = 12 + "px lucida console";
+          drawSCIPalette(510, 250);
+        }
+      }
+
+      function updateCheckbox(i) {
+        if (i == 1) {
+          if (hexFX) {hexFX--;} else {hexFX++;}
+          updateDraw();
+        } else if (i == 2) {
+          if (showPalette) {showPalette--;} else {showPalette++;}
+          updateDraw();
+        } else if (i == 3) {
+          if (hexCycToggle) {hexCycToggle--;} else {hexCycToggle++;}
+          updateDraw();
+        } else {
+          if (document.getElementById("aniChk").value == 0) {
+            document.getElementById("aniChk").value = 1;
+            startAnimate();
+          } else {
+            document.getElementById("aniChk").value = 0;
+            stopAnimate();
+          }
+        }
+      }
+
+      function updateASpeed() {
+        if (document.getElementById("aniChk").value == 1) {
+          stopAnimate();
+        }
+        animationSpeed = parseInt(document.getElementById("aSpeed").value, 10)
+        if (document.getElementById("aniChk").value == 1) {
+          startAnimate();
+        }
+      }
+
+      function updateFntSize() {
+        hexFntSize = parseInt(document.getElementById("fntSize").value, 10)
+        updateDraw();
+      }
+
+      function xy(w) {
+        if (w) {
+          var s = parseInt(document.getElementById("ps").value, 10)
+          pixelWidth = s;
+          pixelHeight = s;
+        } else {
+          yP = parseInt(document.getElementById("yp").value, 10);
+          xP = parseInt(document.getElementById("xp").value, 10);
+        }
+        updateDraw();
+      }
+
+      </script>
+    </div>
+    <div class="column" style="width: 50">
+      <p> 
+        <a href="help/help.html">Important Usage Info</a>
+        <p>
+          Views: <button onclick="importFile(0)">Import View</button>
+          <button onclick="exportSCI0()">Export SCI0 View</button>
+          <button onclick="exportSCI1()">Export SCI1 View</button>
+        </p> 
+        Palettes: <button onclick="importFile(1)">Replace Palette</button>
+        <button onclick="UseDefaultSCI0()">Use SCI0 Pal.</button>
+        <p>
+          
+        Png: <button onclick="exportCel()">Export cel as .png</button>
+          <button onclick="exportLoop()">Export loop as .pngs</button>
+          <!--button onclick="exportAll()">Export All</button-->
+        </p>
+        <label for="selLoop">Loop:</label>
+        <input type="number" id="selLoop" name="selLoop" value="0" min="0" max="0" onchange="sLoopChanged()" />
+        
+        <label for="selCel">Cel:</label>
+        <input type="number" id="selCel" name="selCel" value="0" min="0" max="0" onchange="updateDraw()" />
+
+        <label for="aniChk">Animate Loop: </label>
+        <input type="checkbox" id="aniChk" name="aniChk" value="0" onchange="updateCheckbox(0)" />  
+
+        <label for="aSpeed">Ani. Speed: </label>
+        <input type="number" id="aSpeed" name="aSpeed" value="200" min="5" max="999" onchange="updateASpeed()" />
+        
+        <p>
+          <label for="xp">X pos: </label>
+          <input type="number" id="xp" name="xp" value="320" min="0" max="640" onchange="xy(0)" />
+        
+          <label for="yp">Y pos: </label>
+          <input type="number" id="yp" name="yp" value="300" min="0" max="380" onchange="xy(0)" />
+
+          <label for="ps">Pxl size: </label>
+          <input type="number" id="ps" name="ps" value="2" min="1" max="300" onchange="xy(1)" />
+        
+          <label for="showPal">Show Palette:</label> 
+          <input type="checkbox" id="showPal" name="showPal" value="1" checked="true" onchange="updateCheckbox(2)" />
+        </p>  
+        <br>Just for fun:<br>
+        <label for="hexChk">Hex effect:</label>
+        <input type="checkbox" id="hexChk" name="hexChk" value="0" onchange="updateCheckbox(1)" />
+
+        <label for="hexCyc">Hex cycle:</label>
+        <input type="checkbox" id="hexCyc" name="hexCyc" value="0" checked="true" onchange="updateCheckbox(3)" />
+
+        <label for="fntSize">Fnt Size: </label>
+        <input type="number" id="fntSize" name="fntSize" value="6" min="1" max="100" onchange="updateFntSize()" />
+      </p>
+    </div>
+  </div>
+</body>
+</html>
