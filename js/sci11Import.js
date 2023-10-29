@@ -1,11 +1,14 @@
-var loopPointers = []; //offsets to loop starts
+var loopPointers = []; // offsets to loop starts
 var celPointers = []; //offsets to cel starts
+var celCounts = []; // store loop cel counts
 var celSize;
+
 
 function processSCI11(data) {
   // Use x.length = 0 to clear arrays...
   loopPointers.length = 0;
   celPointers.length = 0;
+  celCounts.length = 0;
   cels.length = 0;
   loops.length = 0;
   sciPalette.length = 0;
@@ -84,8 +87,9 @@ function processSCI11(data) {
     // 0x00 mirror flag WORD
     var seekEntry = loopData.slice(0,2);
     // 0x02 celCount BYTE
-    var celCount = loopData.slice(2,3);
+    var celCount = parseInt(loopData.slice(2,3), 10);
     console.log("celCount: " + celCount);
+    celCounts.push(celCount);
 
     // 0x12 celDataOffset 4BYTES
     var celDataOffset = to32Bit(loopData.slice(12, 16));
@@ -97,7 +101,7 @@ function processSCI11(data) {
   // pack loop/cel data into 'loops' array
   for (let i = 0; i < celPointers.length; i++) {
     var celDataOffset = celPointers[i]
-    for (let j = 0; j < celCount; j++) {
+    for (let j = 0; j < celCounts[i]; j++) {
       var celOffset = celDataOffset + (j * celSize);
       getSCI11CelData(data, celOffset);
     }
