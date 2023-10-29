@@ -36,6 +36,7 @@
   
       <script type="text/javascript" src="./js/sci0Import.js"></script>
       <script type="text/javascript" src="./js/sci1Import.js"></script>
+      <script type="text/javascript" src="./js/sci11Import.js"></script>
       <script type="text/javascript" src="./js/sci0Export.js"></script>
       <script type="text/javascript" src="./js/sci1Export.js"></script>
       <script type="text/javascript" src="./js/palette.js"></script>
@@ -56,14 +57,18 @@
       var loops = [];
       var mirrorMask = 0;
       var isSCI1 = 0;
+      var isSCI11 = 0;
+      var sci11Flags = 0;
       var xP = c.width/2; 
-      var yP = 300; //c.height/2;
+      var yP = c.height/2;
       var viewName; 
       var hexFX = 1;
       var hexCyc = 0;
       var hexCycToggle = 1;
       var hexFntSize = 6;
       var showPalette = 1;
+      var showOrigin = 0;
+      var oCol = 0;
       var animationSpeed = 200;
 
       function download(data, filename, type) {
@@ -114,13 +119,22 @@
                 ctx.clearRect(0, 0, c.width, c.height);
                 fileHeader = fData.slice(0, 2);
                 if (fExt[1] != 'v56') {
-                  // TODO: Add SCI1.1 support
                   isSCI1 = 0;
+                  isSCI11 = 0;
                   processSCI0(fData.slice(2));
                 } else {
-                  viewName = fExt[0]; // use first half of filename instead
-                  isSCI1 = 1;
-                  processSCI1(fData.slice(2));
+                  viewName = fExt[0]; // sci1+ naming convention
+                  if (fData[1] == 128) {
+                    // SCI1.1 is 0x8080...
+                    isSCI1 = 0;
+                    isSCI11 = 1;
+                    processSCI11(fData.slice(26));
+                  } else {
+                    // SCI1.1 is 0x8000...
+                    isSCI1 = 1;
+                    isSCI11 = 0;
+                    processSCI1(fData.slice(2));
+                  }
                 }
                 document.getElementById("selLoop").max = loops.length - 1;
                 var tempCel = loops[0];
@@ -149,6 +163,14 @@
         return a + (b*256);
       }
 
+      function to32Bit(array) {
+        var a = array[0];
+        var b = array[1];
+        var c = array[2];
+        var d = array[3];
+        return a + (b*256) + (c*65536) + (d*1677216);
+      }
+
       function sLoopChanged() {
         var tempCel = loops[document.getElementById("selLoop").value];
         document.getElementById("selCel").max = tempCel.length - 1;
@@ -165,6 +187,13 @@
           ctx.font = 12 + "px lucida console";
           drawSCIPalette(510, 250);
         }
+        if (showOrigin) {
+          oCol ++;
+          if (oCol > 15) {oCol=0}
+          var curCol = sciPalette[oCol];
+          ctx.fillStyle = rgb(curCol[1],curCol[2],curCol[3]);
+          ctx.fillRect(xP, yP, pixelWidth, pixelHeight);
+        }
       }
 
       function updateCheckbox(i) {
@@ -176,6 +205,9 @@
           updateDraw();
         } else if (i == 3) {
           if (hexCycToggle) {hexCycToggle--;} else {hexCycToggle++;}
+          updateDraw();
+        } else if (i == 4) {
+          if (showOrigin) {showOrigin--;} else {showOrigin++;}
           updateDraw();
         } else {
           if (document.getElementById("aniChk").value == 0) {
@@ -254,10 +286,14 @@
 
           <label for="ps">Pxl size: </label>
           <input type="number" id="ps" name="ps" value="2" min="1" max="300" onchange="xy(1)" />
-        
+        </p> 
+        <p>
           <label for="showPal">Show Palette:</label> 
           <input type="checkbox" id="showPal" name="showPal" value="1" checked="true" onchange="updateCheckbox(2)" />
-        </p>  
+
+          <label for="showOrg">Show Origin:</label> 
+          <input type="checkbox" id="showOrg" name="showOrg" value="1" onchange="updateCheckbox(4)" />
+        </p> 
         <br>Just for fun:<br>
         <label for="hexChk">Hex effect:</label>
         <input type="checkbox" id="hexChk" name="hexChk" value="0" onchange="updateCheckbox(1)" />
