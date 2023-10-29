@@ -49,6 +49,9 @@ function drawCel(loop, cel, x, y) {
 
         if (color == tCol) {
             // Don't draw transparancy
+            if (showTColor) {
+                ctx.fillRect(x+ (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight), pixelWidth, pixelHeight);
+            }
         } else {
             if (hexFX == 0) {
                 var hc = color;

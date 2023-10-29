@@ -86,26 +86,20 @@ function processSCI11(data) {
     // 0x02 celCount BYTE
     var celCount = loopData.slice(2,3);
     console.log("celCount: " + celCount);
-    
-    var temp = [];
-    for (let j = 0; j < celCount; j++) {
-      // 0x12 celDataOffset 4BYTES
-      var start = 12 + (j * 4);
-      var end = 16 + (j * 4);
-      console.log("start: " + start + ", end: " + end);
-      var celDataOffset = to32Bit(loopData.slice(start, end));
-      console.log("celDataOffset: " + celDataOffset);
-      temp.push(celDataOffset + (j * celSize));
-    }
-    celPointers.push(temp);
+
+    // 0x12 celDataOffset 4BYTES
+    var celDataOffset = to32Bit(loopData.slice(12, 16));
+    console.log("celDataOffset: " + celDataOffset);
+    celPointers.push(celDataOffset);
   }
 
 
   // pack loop/cel data into 'loops' array
   for (let i = 0; i < celPointers.length; i++) {
-    var theCelPointers = celPointers[i]
-    for (let j = 0; j < theCelPointers.length; j++) {
-      getSCI11CelData(data, theCelPointers[j]);
+    var celDataOffset = celPointers[i]
+    for (let j = 0; j < celCount; j++) {
+      var celOffset = celDataOffset + (j * celSize);
+      getSCI11CelData(data, celOffset);
     }
     loops.push(cels);
     cels = [];
@@ -123,10 +117,12 @@ function getSCI11CelData(data, offset) {
   // 0x02 - 0x03 Cel height
   var h = to16Bit(celData.slice(2, 4));
   theCel.push(h);
+  
   // 0x04 - 0x05 x cel displacement (origin)
   theCel.push(to16Bit(celData.slice(4, 6)));
   // 0x06 - 0x08 y cel displacement (origin)
   theCel.push(to16Bit(celData.slice(6, 8))); 
+  
   // 0x08  transparency color
   var tCol = parseInt(celData.slice(8, 9),10);
   theCel.push(tCol);
