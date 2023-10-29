@@ -108,7 +108,7 @@ function processSCI11(data) {
 
 function getSCI11CelData(data, offset) {
   var celData = data.slice(offset, offset+parseInt(celSize,10));
-  console.log("celData: " + celData);
+  console.log("celData at offset " + offset + ": " + celData);
 
   var theCel = [];
   // 0x00 - 0x01 Cel width
@@ -119,9 +119,28 @@ function getSCI11CelData(data, offset) {
   theCel.push(h);
   
   // 0x04 - 0x05 x cel displacement (origin)
-  theCel.push(to16Bit(celData.slice(4, 6)));
+  var a = parseInt(celData.slice(4, 5), 10);
+  var b = parseInt(celData.slice(5, 6), 10);
+  var xDisplace;
+  if (b == 255) {
+    xDisplace = a-256;
+  } else {
+    xDisplace = a;
+  }
+  //theCel.push(to16Bit(celData.slice(4, 6)));
+  theCel.push(xDisplace);
+  
   // 0x06 - 0x08 y cel displacement (origin)
-  theCel.push(to16Bit(celData.slice(6, 8))); 
+  a = parseInt(celData.slice(6, 7), 10);
+  b = parseInt(celData.slice(7, 8), 10);
+  var yDisplace;
+  if (b == 255) {
+    yDisplace = a-256;
+  } else {
+    yDisplace = a;
+  }
+  //theCel.push(to16Bit(celData.slice(6, 8)));
+  theCel.push(yDisplace); 
   
   // 0x08  transparency color
   var tCol = parseInt(celData.slice(8, 9),10);
@@ -134,8 +153,8 @@ function getSCI11CelData(data, offset) {
 
   console.log("w: " + w);
   console.log("h: " + h);
-  console.log("x displace: " + to16Bit(celData.slice(4, 6)));
-  console.log("y displace: " + to16Bit(celData.slice(6, 8)));
+  console.log("x displace: " + xDisplace);
+  console.log("y displace: " + yDisplace);
   console.log("trans color: " + tCol);
   console.log("offsetRLE: " + offsetRLE);
   console.log("offsetLiteral: " + offsetLiteral);

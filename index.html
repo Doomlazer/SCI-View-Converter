@@ -193,7 +193,7 @@
           if (oCol > 15) {oCol=2}
           var curCol = sciPalette[oCol];
           ctx.fillStyle = rgb(curCol[1],curCol[2],curCol[3]);
-          ctx.fillRect(xP, yP, pixelWidth, pixelHeight);
+          ctx.fillRect(xP, yP, pixelWidth, -pixelHeight);
         }
       }
 
@@ -286,7 +286,7 @@
           <input type="number" id="xp" name="xp" value="320" min="0" max="640" onchange="xy(0)" />
         
           <label for="yp">Y pos: </label>
-          <input type="number" id="yp" name="yp" value="300" min="0" max="380" onchange="xy(0)" />
+          <input type="number" id="yp" name="yp" value="190" min="0" max="380" onchange="xy(0)" />
 
           <label for="ps">Pxl size: </label>
           <input type="number" id="ps" name="ps" value="2" min="1" max="300" onchange="xy(1)" />
