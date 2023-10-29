@@ -1,7 +1,7 @@
 var data = [];
 
 function exportSCI0() {
-    if (isSCI1) {
+    if (isSCI1 || isSCI11) {
         UseDefaultSCI0()
     }
 
@@ -11,8 +11,8 @@ function exportSCI0() {
     var lpOffsets = [];
     var forMirrors = [];
 
-    data.push(fileHeader[0]); // \x80
-    data.push(fileHeader[1]); // \x00
+    data.push(128); // 0x80
+    data.push(0); // 0x00
 
     push16toLE(loopsCount);
 

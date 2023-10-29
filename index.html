@@ -47,7 +47,6 @@
       const c = document.getElementById("myCanvas");
       const ctx = c.getContext("2d");
 
-      fileHeader = [];
       var animateIntervalID = 0;
       var pixelWidth = 2;
       var pixelHeight = 2;
@@ -118,7 +117,6 @@
                 // import view
                 viewName = fExt[1];
                 ctx.clearRect(0, 0, c.width, c.height);
-                fileHeader = fData.slice(0, 2);
                 if (fExt[1] != 'v56') {
                   isSCI1 = 0;
                   isSCI11 = 0;

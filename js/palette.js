@@ -11,6 +11,7 @@ function processPal(data, useDefaultSCI0) {
             targetPalette.push(getSCI0PColor(i));
         }
         isSCI1 = 0;
+        isSCI11 = 0;
     } else {
         // import the palette from pal file.
         var palOff;
