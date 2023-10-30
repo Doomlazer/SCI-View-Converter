@@ -13,6 +13,7 @@ function processSCI11(data) {
   cels.length = 0;
   loops.length = 0;
   sciPalette.length = 0;
+  mirrorStorage.length = 0;
 
   // starting from offset 0x26 of the file view file (which has been removed from data):
 
@@ -55,39 +56,46 @@ function processSCI11(data) {
   }
 
   // 0x10 loop size BYTE
-  var loopSize = data.slice(12,13);
+  var loopSize = parseInt(data.slice(12,13), 10);
   //console.log("loopSize: " + loopSize);
   
   // 0x11 cel size	BYTE
-  celSize = data.slice(13,14);
+  celSize = parseInt(data.slice(13,14), 10);
   //console.log("celSize: " + celSize);
 
   // collect celPointers for each loop
   for (let i = 0; i < loopCount; i++) {
     var offSet = headerSize + (i * loopSize);
-    var loopData = data.slice(offSet, offSet+parseInt(loopSize,10));
+    var loopData = data.slice(offSet, offSet + loopSize);
     //console.log("loopData for loop " + i + ": " + loopData);
-    
-    //TODO: Add support for SCI1.1 mirror flag
-    // from scummvm:
-          /*
-          seekEntry = loopData[0];
-          if (seekEntry != 255) {
-            _loop[loopNo].mirrorFlag = true;
 
-            // use the root loop for mirroring. this handles rare loops that
-            //  mirror loops that mirror loops. (FPFP view 844, bug #10953)
-            do {
-              if (seekEntry >= loopCount)
-                error("Bad loop-pointer in sci 1.1 view");
-              loopData = _resource->subspan(headerSize + (seekEntry * loopSize));
-            } while ((seekEntry = loopData[0]) != 255);
-          } else {
-            _loop[loopNo].mirrorFlag = false;
-          }
-          */
     // 0x00 mirror flag WORD
-    var seekEntry = loopData.slice(0,2);
+    var seekEntry = to16Bit(loopData.slice(0,2));
+    //console.log("loop: " + i + ", seekEntry: " + seekEntry);
+    if (seekEntry != 255) {
+      // use the root loop for mirroring. this handles rare loops that
+      //  mirror loops that mirror loops. (FPFP view 844, bug #10953)
+      var tempLD;
+      var tempSeek = seekEntry;
+      do {
+        tempSeek -= 256;
+        var tempOffSet = headerSize + (tempSeek * loopSize);
+        tempLD = data.slice(tempOffSet, tempOffSet + loopSize);
+        tempSeek = to16Bit(tempLD.slice(0,2));
+        if (tempSeek != 255) {
+          seekEntry = tempSeek;
+        }
+      } while (tempSeek != 255);
+
+      seekEntry -= 256;
+      mirrorStorage[i] = seekEntry; //store the loop it references
+      addToMirrorMask(i);
+      console.log("loop: " + i + " is a mirror of: " + seekEntry);
+      offSet = headerSize + (seekEntry * loopSize);
+      loopData = data.slice(offSet, offSet+parseInt(loopSize,10));
+    } else {
+      mirrorStorage[i] = 255;
+    }
     // 0x02 celCount BYTE
     var celCount = parseInt(loopData.slice(2,3), 10);
     //console.log("celCount: " + celCount);
@@ -238,3 +246,58 @@ function getSCI11CelData(data, offset) {
   //console.log("w: " + w + ", h: " + h + ", w*h: " + (w*h));
   //console.log("the cell data: " + theCel);
 };
+
+function addToMirrorMask(l) {
+  switch(l) {
+    case 0:
+      mirrorMask += 1;
+      break;
+    case 1:
+      mirrorMask += 2;
+      break;
+    case 2:
+      mirrorMask += 4;
+      break;
+    case 3:
+      mirrorMask += 8;
+      break;
+    case 4:
+      mirrorMask += 16;
+      break;
+    case 5:
+      mirrorMask += 32;
+      break;
+    case 6:
+      mirrorMask += 64;
+      break;
+    case 7:
+      mirrorMask += 128;
+      break;
+    case 8:
+      mirrorMask += 256;
+      break;
+    case 9:
+      mirrorMask += 512;
+      break;
+    case 10:
+      mirrorMask += 1024;
+      break;
+    case 11:
+      mirrorMask += 2048;
+      break;
+    case 12:
+      mirrorMask += 4096;
+      break;
+    case 13:
+      mirrorMask += 8192;
+      break;
+    case 14:
+      mirrorMask += 16384;
+      break;
+    case 15:
+      mirrorMask += 32768;
+      break;
+    default:
+      console.error("mirrored loop > than 0 to 15");
+  }
+}

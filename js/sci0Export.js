@@ -1,3 +1,4 @@
+var mirrorToDo = [];
 var data = [];
 
 function exportSCI0() {
@@ -10,6 +11,7 @@ function exportSCI0() {
     var offsetCounter = 10;
     var lpOffsets = [];
     var forMirrors = [];
+    mirrorToDo.length = 0;
 
     data.push(128); // 0x80
     data.push(0); // 0x00
@@ -30,11 +32,21 @@ function exportSCI0() {
     // pack loops
     for (let i = 0; i < loopsCount; i++) {
         if (((2 ** i) & mirrorMask) === (2 ** i)) {
-            // set the previous loop for mirroring.
-            // this might not be the case all the time, compare against orignal data to find the true mirror offset
-            replace16toLE(forMirrors[i-1], 10 + (i * 2));
-            forMirrors.push(forMirrors[i-1]);
-            lpOffsets.push(forMirrors[i-1]);
+            // Mirrored loop, set the mirrored offset
+            var mL = mirrorStorage[i]; 
+            // if it mirrors a loop we haven't packed yet we need to correct it later
+            if (mL > i) {
+                mirrorToDo.push(i);
+                // add garbage placeholder until mirrorToDO;
+                replace16toLE(forMirrors[i-1], 10 + (i * 2));
+                forMirrors.push(forMirrors[i-1]);
+                lpOffsets.push(forMirrors[i-1]);
+            } else {
+                // add the correct offset
+                replace16toLE(forMirrors[mL], 10 + (i * 2));
+                forMirrors.push(forMirrors[mL]);
+                lpOffsets.push(forMirrors[mL]);
+            }
         } else {
             replace16toLE((offsetCounter - 2), 10 + (i * 2)); // insert loop offset adjusted for header
             forMirrors.push(offsetCounter - 2);
@@ -81,6 +93,17 @@ function exportSCI0() {
                     offsetCounter++;
                 }
             }
+        }
+    }
+
+    // Correct those out of order mirror pointers!
+    if (mirrorToDo.length > 0) {
+        console.log("mirrorToDo: " + mirrorToDo);
+        for (let i=0; i < mirrorToDo.length; i++) {
+            var tL = mirrorToDo[i]
+            var mL = mirrorStorage[tL]; 
+            console.log("mL: " + mL);
+            replace16toLE(forMirrors[mL], 10 + (tL * 2));
         }
     }
 

@@ -1,3 +1,4 @@
+var mirrorToDo = [];
 var data = [];
 var fullPal = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,
     34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,
@@ -45,6 +46,7 @@ function exportSCI1() {
     var offsetCounter = 10;
     var lpOffsets = [];
     var forMirrors = [];
+    mirrorToDo.length = 0;
 
     data.push(128); // 0x80
     data.push(0); // 0x00
@@ -66,11 +68,21 @@ function exportSCI1() {
     // pack loops
     for (let i = 0; i < loopsCount; i++) {
         if (((2 ** i) & mirrorMask) === (2 ** i)) {
-            // set the previous loop for mirroring.
-            // this might not be the case all the time, compare against orignal data to find the true mirror offset
-            replace16toLE(forMirrors[i-1], 10 + (i * 2));
-            forMirrors.push(forMirrors[i-1]);
-            lpOffsets.push(forMirrors[i-1]);
+            // Mirrored loop, set the mirrored offset
+            var mL = mirrorStorage[i]; 
+            // if it mirrors a loop we haven't packed yet we need to correct it later
+            if (mL > i) {
+                mirrorToDo.push(i);
+                // add garbage placeholder until mirrorToDO;
+                replace16toLE(forMirrors[i-1], 10 + (i * 2));
+                forMirrors.push(forMirrors[i-1]);
+                lpOffsets.push(forMirrors[i-1]);
+            } else {
+                // add the correct offset
+                replace16toLE(forMirrors[mL], 10 + (i * 2));
+                forMirrors.push(forMirrors[mL]);
+                lpOffsets.push(forMirrors[mL]);
+            }
         } else {
             replace16toLE((offsetCounter - 2), 10 + (i * 2)); // insert loop offset adjusted for header
             forMirrors.push(offsetCounter - 2);
@@ -86,8 +98,7 @@ function exportSCI1() {
 
             for (let k = 0; k < celCount; k++) {
                 push16toLE(0); //set celOffsets to zero for now
-                offsetCounter += 2;
-                
+                offsetCounter += 2; 
             }
 
             // pack cels
@@ -166,6 +177,16 @@ function exportSCI1() {
         }
     }
 
+    // Correct those out of order mirror pointers!
+    if (mirrorToDo.length > 0) {
+        console.log("mirrorToDo: " + mirrorToDo);
+        for (let i=0; i < mirrorToDo.length; i++) {
+            var tL = mirrorToDo[i]
+            var mL = mirrorStorage[tL]; 
+            console.log("mL: " + mL);
+            replace16toLE(forMirrors[mL], 10 + (tL * 2));
+        }
+    }
    
     //add Palette 
     replace16toLE((offsetCounter - 2), 8); // set palette offset

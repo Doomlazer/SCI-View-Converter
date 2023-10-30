@@ -8,6 +8,7 @@ function processSCI0(data) {
   cels.length = 0;
   loops.length = 0;
   sciPalette.length = 0;
+  mirrorStorage.length = 0;
 
   // 0x00-0x01 number of loops in view
   var numLoop = to16Bit(data.slice(0,2));
@@ -31,6 +32,26 @@ function processSCI0(data) {
     loopPointers.push(to16Bit(data.slice(c+8,c+10)));
     c += 2;
   }
+
+  // record mirrored loop references for exporting later
+  c = 0;
+  for (let i = 0; i < numLoop; i++) {
+    if (((2 ** i) & mirrorMask) === (2 ** i)) {
+      var curLoopOffset = loopPointers[i];
+      let r = 0;
+      while (r < numLoop) {
+        // find the matching pointer that isn't the current (mirrored) loop
+        if ((curLoopOffset == loopPointers[r]) && (r != i)) {
+          mirrorStorage[i] = r;
+          break;
+        }
+        r++;
+      }
+    } else {
+      mirrorStorage[i] = 255;
+    }
+  }
+
   for (let i = 0; i < loopPointers.length; i++) {
     var numCel = data.slice(loopPointers[i], loopPointers[i]+1);
     c = 0;
