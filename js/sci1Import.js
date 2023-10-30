@@ -2,6 +2,7 @@ var loopPointers = []; //offsets to loop starts
 var celPointers = []; //offsets to cel starts
 
 function processSCI1(data) {
+  console.log("importing as SCI1");
   // Use x.length = 0 to clear arrays...
   loopPointers.length = 0;
   celPointers.length = 0;
@@ -145,5 +146,6 @@ function getSCI1CelData(data, offset) {
   }
   cels.push(theCel);
   //console.log("imported cw: " + cw + ", ch: " + ch + ", w*h: " + (cw*ch));
-  //console.log("the imported cell data: " + theCel);
+  console.log("the imported cell data: " + theCel);
+  console.log("the imported cell data.length: " + theCel.length);
 };

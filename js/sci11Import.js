@@ -5,6 +5,7 @@ var celSize;
 
 
 function processSCI11(data) {
+  console.log("importing as SCI1.1");
   // Use x.length = 0 to clear arrays...
   loopPointers.length = 0;
   celPointers.length = 0;
@@ -18,11 +19,11 @@ function processSCI11(data) {
   // 0x00 sci1.1 header size WORD
   var headerSize = to16Bit(data.slice(0,2));
   headerSize += 2; // account for the headSize WORD at the beginning of data
-  console.log("total headerSize: " + headerSize);
+  //console.log("total headerSize: " + headerSize);
 
   // 0x02 number of loops in view BYTE
   var loopCount = data.slice(2,3);
-  console.log("loopCount: " + loopCount);
+  //console.log("loopCount: " + loopCount);
   
   // 0x03 sci1.1 flags BYTE, just store this for posible export for now. 
   // from scummvm view.cpp:
@@ -55,16 +56,17 @@ function processSCI11(data) {
 
   // 0x10 loop size BYTE
   var loopSize = data.slice(12,13);
-  console.log("loopSize: " + loopSize);
+  //console.log("loopSize: " + loopSize);
+  
   // 0x11 cel size	BYTE
   celSize = data.slice(13,14);
-  console.log("celSize: " + celSize);
+  //console.log("celSize: " + celSize);
 
   // collect celPointers for each loop
   for (let i = 0; i < loopCount; i++) {
     var offSet = headerSize + (i * loopSize);
     var loopData = data.slice(offSet, offSet+parseInt(loopSize,10));
-    console.log("loopData for loop " + i + ": " + loopData);
+    //console.log("loopData for loop " + i + ": " + loopData);
     
     //TODO: Add support for SCI1.1 mirror flag
     // from scummvm:
@@ -88,12 +90,12 @@ function processSCI11(data) {
     var seekEntry = loopData.slice(0,2);
     // 0x02 celCount BYTE
     var celCount = parseInt(loopData.slice(2,3), 10);
-    console.log("celCount: " + celCount);
+    //console.log("celCount: " + celCount);
     celCounts.push(celCount);
 
     // 0x12 celDataOffset 4BYTES
     var celDataOffset = to32Bit(loopData.slice(12, 16));
-    console.log("celDataOffset: " + celDataOffset);
+    //console.log("celDataOffset: " + celDataOffset);
     celPointers.push(celDataOffset);
   }
 
@@ -112,7 +114,7 @@ function processSCI11(data) {
 
 function getSCI11CelData(data, offset) {
   var celData = data.slice(offset, offset+parseInt(celSize,10));
-  console.log("celData at offset " + offset + ": " + celData);
+  //console.log("celData at offset " + offset + ": " + celData);
 
   var theCel = [];
   // 0x00 - 0x01 Cel width
@@ -155,13 +157,15 @@ function getSCI11CelData(data, offset) {
   // 0x28 offsetLiteral (color indexs)  4BYTES
   var offsetLiteral = to32Bit(celData.slice(28, 32));
 
+  /*
   console.log("w: " + w);
   console.log("h: " + h);
   console.log("x displace: " + xDisplace);
   console.log("y displace: " + yDisplace);
   console.log("trans color: " + tCol);
   console.log("offsetRLE: " + offsetRLE);
-  console.log("offsetLiteral: " + offsetLiteral);
+  console.log("offsetLiteral: " + offsetLiteral); 
+  */
 
   // SCI1 Run Lenght Encoding 
   // taken from https://github.com/scummvm/scummvm/blob/master/engines/sci/graphics/view.cpp
