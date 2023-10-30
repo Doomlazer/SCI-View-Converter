@@ -231,5 +231,6 @@ function getSCI11CelData(data, offset) {
     }
   }
   cels.push(theCel);
-  console.log("the cell data: " + theCel);
+  //console.log("w: " + w + ", h: " + h + ", w*h: " + (w*h));
+  //console.log("the cell data: " + theCel);
 };

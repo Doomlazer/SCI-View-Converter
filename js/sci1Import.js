@@ -67,9 +67,11 @@ function processSCI1(data) {
 function getSCI1CelData(data, offset) {
   var theCel = [];
   // 0x00 - 0x01 Cel width
-  theCel.push(to16Bit(data.slice(offset, offset+2)));
+  var cw = to16Bit(data.slice(offset, offset+2))
+  theCel.push(cw);
   // 0x02 - 0x03 Cel height
-  theCel.push(to16Bit(data.slice(offset+2, offset+4)));
+  var ch = to16Bit(data.slice(offset+2, offset+4))
+  theCel.push(ch);
   // 0x04 x cel displacement (origin)
   theCel.push(data.slice(offset+4, offset+5));
   // 0x05 y cel displacement (origin)
@@ -99,7 +101,7 @@ function getSCI1CelData(data, offset) {
       case 0: 
         // Copy next YYYYYY bytes as-is
         rep = (theByte & 255);
-        //console.log("As-IS, for next: " + rep + " bytes .");
+        //console.log("As-IS, for next: " + rep + " bytes.");
         for (let j = 0; j < rep; j++) {
           var palNum = data.slice(offset+8+k+1+j, offset+9+k+1+j)
           theCel.push(palNum);
@@ -110,7 +112,7 @@ function getSCI1CelData(data, offset) {
       case 1:
         // Same as above, copy YYYYYY + 64 bytes as-is
         rep = (theByte & 191) + 64;
-        //console.log("As-IS (+64), for next: " + (rep + 64) + " bytes .");
+        //console.log("As-IS (+64), for next: " + (rep + 64) + " bytes.");
         for (let j = 0; j < (rep + 64); j++) {
           var palNum = data.slice(offset+8+k+1+j, offset+9+k+1+j)
           theCel.push(palNum);
@@ -142,5 +144,6 @@ function getSCI1CelData(data, offset) {
     }
   }
   cels.push(theCel);
-  //console.log("the cell data: " + theCel);
+  //console.log("imported cw: " + cw + ", ch: " + ch + ", w*h: " + (cw*ch));
+  //console.log("the imported cell data: " + theCel);
 };

@@ -90,11 +90,13 @@ function exportSCI1() {
             }
 
             // pack cels
-            console.log("lpOffsets: " + lpOffsets);
+            //console.log("lpOffsets: " + lpOffsets);
             for (let k = 0; k < celCount; k++) {
                 replace16toLE((offsetCounter - 2), lpOffsets[i] + 6 + (k * 2)); // insert cel offset
                 var theCel = theLoop[k];
 
+                var w = parseInt(theCel[0]);
+                var h = parseInt(theCel[1]);
                 push16toLE(theCel[0]) // width
                 push16toLE(theCel[1]) // height
                 data.push(theCel[2]) // displace x byte
@@ -103,15 +105,20 @@ function exportSCI1() {
                 data.push(0) // padding byte or trans color is a word?
                 // add the number of bytes we just pushed
                 offsetCounter += 8;
-                //console.log("TheCel: " + theCel);
+                console.log("expected number of pixels: " + (w*h));
+                console.log("TheCel: " + theCel);
+                console.log("TheCel.length: " + theCel.length);
+                var expected = w*h;
                 for (let j = 5; j < theCel.length; 0) {
                     var currentColor = theCel[j];
                     var rCount = 1;
 
+                    console.log("PIXEL NUMBER: " + (j - 4));
                     //console.log("currentColor: " + currentColor + ", next color: " + theCel[j+1] + ", pixel number: " + (j - 4));
                     if (currentColor == parseInt(theCel[j+1], 10)) {
                         // color is repeating
-                        while ((currentColor == theCel[j+rCount]) && (rCount < 64)) {
+                        console.log("THE CURRENTCOLOR: " + currentColor + ", theCel[j+rCount]: " + theCel[j+rCount] + ", (currentColor == parseInt(theCel[j+rCount],10): " + (currentColor == parseInt(theCel[j+rCount],10)));
+                        while ((currentColor == parseInt(theCel[j+rCount],10)) && (rCount < 64)) {
                             rCount++;
                         }
                         //console.log("currentColor: " + currentColor + ", is eqaul to (transcol): " + theCel[4])
@@ -122,7 +129,8 @@ function exportSCI1() {
                             rCase = rCount + 192;
                             data.push(rCase);
                             offsetCounter ++;
-                            //console.log("Transparency repeat: rCase =  " + rCase.toString(16) + ", rCase dec: " + rCase);
+                            console.log("Transparency repeat: " + rCount);
+                            console.log("Transparency repeat: rCase =  0x" + rCase.toString(16) + ", rCase dec: " + rCase);
                         } else {
                             // Case C: XX == 10 (binary)
 	                        // Set the next YYYYY pixels to the next byte value
@@ -130,25 +138,26 @@ function exportSCI1() {
                             data.push(rCase);
                             data.push(currentColor);
                             offsetCounter += 2;
-                            //console.log("Standard repeat: rCase =  " + rCase.toString(16));
-                            //console.log("Standard repeat: currentColor =  " + currentColor.toString(16) + ", currentColor  dec: " + currentColor);
+                            console.log("Standard repeat: " + rCount);
+                            console.log("Standard repeat: rCase =  0x" + rCase.toString(16));
+                            console.log("Standard repeat: currentColor =  0x" + currentColor.toString(16) + ", currentColor  dec: " + currentColor);
                         }
                     } else {
-                        // copy data as-is until a color repeats, or the rCount is >= 127
+                        // copy data as-is until a color repeats, or the rCount is >= 127, or parsed w*h in pixels
                         //console.log("theCel[j]: " + theCel[j] + ", ");
-                        while ((theCel[j+rCount] != theCel[j+rCount+1]) && (rCount < 127)) {
+                        while ((parseInt(theCel[j+rCount],10) != parseInt(theCel[j+rCount+1],10)) && (rCount < 127) && ((j-4+rCount) < expected)) {
                             rCount++;
                         }
                         data.push(rCount);
-                        //console.log("ASIS rCount: " + rCount.toString(16) + ", rCount dec: " + rCount);
+
+                        console.log("ASIS repeat count: 0x" + rCount.toString(16) + ", as DEC: " + rCount);
                         for (let l = 0; l < rCount; l++) {
                             data.push(theCel[j+l]);
-                            var t = theCel[j+l];
-                            //console.log("color: " + t.toString(16) + ", color dec: " + t);
                         }
                         offsetCounter += (rCount + 1);
                     }
                     j += rCount;
+                    
                     //console.log("data: " + data);
                 }
             }
