@@ -28,18 +28,13 @@ function processPal(data, useDefaultSCI0) {
             colCount = 256;
         } else {
             // SCI1.1 palette file
-            // TODO: FIX SCI1.1 pal imports
-            //alert("warning SCI1.1 .pal are currently buggy. Do not use them.");
             palOff = 21;
             palStart = data[25];
-            //colCount = to16Bit(data.slice(29,31)); wth was this??
             colCount = 256;
-            v11 = 1;
         }
         for (i = palStart; i < palStart + colCount; i++) {
             var col = [];
-            // this may not be correct for all sci1.1 pal files
-            // if (v11)
+
             col.push(data[palOff++]); // "used" flag
             col.push(data[palOff++]); // r
             col.push(data[palOff++]); // g
@@ -85,30 +80,37 @@ function processPal(data, useDefaultSCI0) {
             newCel.push(remappedPal[oldCel[4]]); // update transparent color
             for (let j = 5; j < oldCel.length; j++) {
                 var oldColor = oldCel[j];
-                //console.log("old color: " + oldColor + ", remapped Color: " + remappedPal[oldColor]);
                 newCel.push(remappedPal[oldColor]);
             }
             newLoop.push(newCel);
         }
         mappedLoops.push(newLoop);
     }
-    //loops.length = 0;
     loops = mappedLoops;
-    //sciPalette.length = 0;
     sciPalette = targetPalette;
     targetPalette = [];
     updateDraw();
 }
 
 function drawSCIPalette(x, y) {
+    ctx.strokeStyle = "black";
     ctx.strokeText("Current palette:", x, y-10);
     var cRow = 0;
     var cColumn = 0;
     var c = 0;
+    var tRow;
+    var tColumn;
+    var tColor;
+
     for (let i = 0; i < sciPalette.length; i++) {
         var curCol = sciPalette[i];
         ctx.fillStyle = rgb(curCol[1],curCol[2],curCol[3]);
         ctx.fillRect(x + cColumn, y + cRow, 8, 8);
+        if (i == transColor) {
+            tRow = cRow;
+            tColumn = cColumn;
+            tColor = curCol;
+        }
         if (c == 15) {
         cRow += 8;
         cColumn = 0;
@@ -118,6 +120,12 @@ function drawSCIPalette(x, y) {
         c += 1;
         }
     }
+    if (tColor[0] < 125 && tColor[1] < 125 && tColor[2] < 125) {
+        ctx.strokeStyle = "white";
+    } else {
+        ctx.strokeStyle = "black";
+    }
+    ctx.strokeText("T", x + tColumn+1, y + tRow+8);
 
     // draw taget palette (currently disabled)
     if (targetPalette.length > 0) {
@@ -138,6 +146,14 @@ function drawSCIPalette(x, y) {
             c += 1;
             }
         } 
+    }
+
+    function newFunction() {
+        ctx.font = "34 px arial";
+        ctx.fillStyle = "white";
+        ctx.strokeText("T", x + tColumn, y + tRow + 12);
+        ctx.font = "10 px arial";
+        ctx.fillStyle = "black";
     }
 }
 

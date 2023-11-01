@@ -3,26 +3,26 @@ function drawCel(loop, cel, x, y) {
     var cColumn = 0;
     var theLoop = loops[loop];
     var theCel = theLoop[cel];
-    var cWidth = theCel[0];
-    var cHeight = theCel[1];
+    var cWidth = parseInt(theCel[0], 10);
+    var cHeight = parseInt(theCel[1], 10);
     
     // TODO: switch to bit shifting 
-    var xOff = theCel[2];
+    var xOff = parseInt(theCel[2], 10);
     if (xOff > 127) {
         xOff -= 256; //signed int
     } else {
         //hack to prevent the value changing to 100 for some reason
         xOff -= 0;
     }
-    var yOff = theCel[3];
+    var yOff = parseInt(theCel[3], 10);
     if (yOff > 127) {
         yOff -= 256;
     } else {
         yOff -= 0;
     }
-    //console.log("xOff: " + xOff + ", yOff: " + yOff);
     
-    var tCol = theCel[4];
+    var tCol = parseInt(theCel[4], 10);
+    transColor = tCol;
 
     var c = 1;
     var adjWidth;
@@ -43,7 +43,6 @@ function drawCel(loop, cel, x, y) {
 
         var color = theCel[i];
         var curCol = sciPalette[color];
-        //console.log("color: " + color + ", sciPalette[color]: " + sciPalette[color]);
         ctx.fillStyle = rgb(curCol[1],curCol[2],curCol[3]);
         ctx.font = hexFntSize + "px arial";
 
