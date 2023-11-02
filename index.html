@@ -73,6 +73,10 @@
       var transColor;
       var oCol = 0;
       var animationSpeed = 200;
+      var mouseX = 0;
+      var mouseY = 0;
+      var selectedColor = -1;
+      var selToggle = 1;
 
       function download(data, filename, type) {
         var file = new Blob([data], {type: type});
@@ -187,7 +191,7 @@
         drawCel(sLoop, sCel, xP, yP);
         if (showPalette) {
           ctx.font = 12 + "px lucida console";
-          drawSCIPalette(510, 250);
+          drawSCIPalette(445, 185);
         }
         if (showOrigin) {
           oCol ++;
@@ -252,6 +256,19 @@
         updateDraw();
       }
 
+      function getCursorPosition(canvas, event) {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = event.clientX - rect.left - 3;
+        mouseY = event.clientY - rect.top - 3;
+        //console.log("mouseX: " + mouseX + ", mouseY: " + mouseY);
+        updateDraw();
+      }
+
+      const canvas = document.querySelector('canvas')
+      canvas.addEventListener('mousedown', function(e) {
+        getCursorPosition(canvas, e)
+      })
+
       </script>
     </div>
     <div class="column" style="width: 50">
@@ -280,17 +297,19 @@
         <input type="checkbox" id="aniChk" name="aniChk" value="0" onchange="updateCheckbox(0)" />  
 
         <label for="aSpeed">Ani. Speed: </label>
-        <input type="number" id="aSpeed" name="aSpeed" value="200" min="5" max="999" onchange="updateASpeed()" />
+        <input type="number" id="aSpeed" name="aSpeed" value="200" min="5" max="99999" onchange="updateASpeed()" />
         
         <p>
           <label for="xp">X pos: </label>
-          <input type="number" id="xp" name="xp" value="320" min="0" max="640" onchange="xy(0)" />
+          <input type="number" id="xp" name="xp" value="320" min="-99999" max="99999" onchange="xy(0)" />
         
           <label for="yp">Y pos: </label>
-          <input type="number" id="yp" name="yp" value="190" min="0" max="380" onchange="xy(0)" />
+          <input type="number" id="yp" name="yp" value="190" min="-99999" max="99999" onchange="xy(0)" />
 
           <label for="ps">Pxl size: </label>
           <input type="number" id="ps" name="ps" value="2" min="1" max="300" onchange="xy(1)" />
+
+          <input type="color" id="colorpicker" onchange="updatePalColor()" value="#ffffff" style="width:30px;">
         </p> 
         <p>
           <label for="showPal">Show Palette:</label> 

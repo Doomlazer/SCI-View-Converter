@@ -12,7 +12,9 @@ function processPal(data, useDefaultSCI0) {
         }
         isSCI1 = 0;
         isSCI11 = 0;
+        document.getElementById("colorpicker").disabled = true;
     } else {
+        document.getElementById("colorpicker").disabled = false;
         // import the palette from pal file.
         var palOff;
         var palStart;
@@ -91,41 +93,80 @@ function processPal(data, useDefaultSCI0) {
     targetPalette = [];
     updateDraw();
 }
+var s = 1;
 
 function drawSCIPalette(x, y) {
     ctx.strokeStyle = "black";
-    ctx.strokeText("Current palette:", x, y-10);
+    if (selToggle == 1) {
+        ctx.strokeText("Current palette:", x, y-10);
+    } else {
+        ctx.strokeText("Select Replacement:", x, y-10);
+    }
     var cRow = 0;
     var cColumn = 0;
     var c = 0;
     var tRow;
     var tColumn;
     var tColor;
+    var sSize = 12;
 
     for (let i = 0; i < sciPalette.length; i++) {
         var curCol = sciPalette[i];
+        if ((mouseX >= (x + cColumn)) &&  (mouseX <= x + cColumn + sSize)) { 
+            if ((mouseY >= y + cRow) &&  (mouseY <= y + cRow + sSize)) {
+                mouseX = -100;
+                mouseY = -100;
+                document.getElementById("colorpicker").value = rgb(curCol[1], curCol[2], curCol[3], 1);
+                if (selToggle == 1) {
+                    // change palette color
+                    selectedColor = i;
+                } else {
+                    // change cel color
+                    var temp = [];
+                    temp.push(curCol[0].toString(10));
+                    temp.push(curCol[1].toString(10));
+                    temp.push(curCol[2].toString(10));
+                    temp.push(curCol[3].toString(10));
+                    sciPalette[selectedColor] = temp;
+                    selectedColor = i;
+                    selToggle = 1;
+                    
+                }
+                updateDraw();
+            }
+        }
+
         ctx.fillStyle = rgb(curCol[1],curCol[2],curCol[3]);
-        ctx.fillRect(x + cColumn, y + cRow, 8, 8);
+        ctx.fillRect(x + cColumn, y + cRow, sSize, sSize);
         if (i == transColor) {
             tRow = cRow;
             tColumn = cColumn;
             tColor = curCol;
         }
+
+        if (i == selectedColor) {
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + cColumn, y + cRow, sSize, sSize);
+            ctx.lineWidth = 1;
+        }
+
         if (c == 15) {
-        cRow += 8;
+        cRow += sSize;
         cColumn = 0;
         c = 0;
         } else {
-        cColumn += 8;
+        cColumn += sSize;
         c += 1;
         }
     }
+
     if (tColor[0] < 125 && tColor[1] < 125 && tColor[2] < 125) {
         ctx.strokeStyle = "white";
     } else {
         ctx.strokeStyle = "black";
     }
-    ctx.strokeText("T", x + tColumn+1, y + tRow+8);
+    ctx.strokeText("T", x + tColumn+2, y + tRow+10);
 
     // draw taget palette (currently disabled)
     if (targetPalette.length > 0) {
@@ -147,21 +188,30 @@ function drawSCIPalette(x, y) {
             }
         } 
     }
-
-    function newFunction() {
-        ctx.font = "34 px arial";
-        ctx.fillStyle = "white";
-        ctx.strokeText("T", x + tColumn, y + tRow + 12);
-        ctx.font = "10 px arial";
-        ctx.fillStyle = "black";
-    }
 }
 
-function rgb(r, g, b){
+function rgb(r, g, b, s=0){
     r = Math.floor(r);
     g = Math.floor(g);
     b = Math.floor(b);
-    return ["rgb(",r,",",g,",",b,")"].join("");
+    if (s) {
+        return ["#",r.toString(16).padStart(2, "0"),g.toString(16).padStart(2, "0"),b.toString(16).padStart(2, "0")].join("");
+    } else {
+        return ["rgb(",r,",",g,",",b,")"].join("");
+    }
+}
+
+function updatePalColor() {
+    var r = parseInt(document.getElementById("colorpicker").value.substring(1, 3), 16);
+    var g = parseInt(document.getElementById("colorpicker").value.substring(3, 5), 16);
+    var b = parseInt(document.getElementById("colorpicker").value.substring(5, 7), 16);
+    var curCol = sciPalette[selectedColor];
+    curCol[1] = r;
+    curCol[2] = g;
+    curCol[3] = b;
+    sciPalette[selectedColor] = curCol;
+    selToggle = 1;
+    updateDraw();
 }
 
 function getSCI0PColor(num) {

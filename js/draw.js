@@ -5,6 +5,7 @@ function drawCel(loop, cel, x, y) {
     var theCel = theLoop[cel];
     var cWidth = parseInt(theCel[0], 10);
     var cHeight = parseInt(theCel[1], 10);
+    var reDraw = 0;
     
     // TODO: switch to bit shifting 
     var xOff = parseInt(theCel[2], 10);
@@ -41,15 +42,33 @@ function drawCel(loop, cel, x, y) {
 
     for (let i = 5; i < theCel.length; i++) {
 
-        var color = theCel[i];
+        var color = parseInt(theCel[i], 10);
         var curCol = sciPalette[color];
-        ctx.fillStyle = rgb(curCol[1],curCol[2],curCol[3]);
+        ctx.fillStyle = rgb(curCol[1], curCol[2], curCol[3]);
         ctx.font = hexFntSize + "px arial";
 
-        if (color == tCol) {
+        var pX = (x+ (xOff*pixelWidth) + cRow - adjWidth);
+        var pY = (y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight));
+        if ((selToggle == 1) && (mouseX >= pX) &&  (mouseX <= pX + pixelWidth)) {    
+            if ((mouseY >= pY) && (mouseY <= pY + pixelHeight)) {
+                mouseX = -100;
+                mouseY = -100;
+                selectedColor = color;
+                document.getElementById("colorpicker").value = rgb(curCol[1], curCol[2], curCol[3], 1);
+                mouseX = 0;
+                mouseY = 0;
+                reDraw = 1;
+                selToggle = 0;
+            }
+        }
+
+        if (color == tCol || color == selectedColor) {
             // Don't draw transparancy
-            if (showTColor) {
-                ctx.fillRect(x+ (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight), pixelWidth, pixelHeight);
+            if (showTColor && color == tCol) {
+                ctx.fillRect(x + (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight), pixelWidth, pixelHeight);
+            }
+            if ((color != tCol) && ((color != selectedColor) || (selToggle == 1))) {
+                ctx.fillRect(x + (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight), pixelWidth, pixelHeight);
             }
         } else {
             if (hexFX == 0) {
@@ -57,9 +76,9 @@ function drawCel(loop, cel, x, y) {
                 if (hexCycToggle) {
                     hc += hexCyc;
                 }
-                ctx.fillText(hexFromCol(((hc) % 16)), x+ (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight));
+                ctx.fillText(hexFromCol(((hc) % 16)), x + (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight));
             } else {
-                ctx.fillRect(x+ (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight), pixelWidth, pixelHeight);
+                ctx.fillRect(x + (xOff*pixelWidth) + cRow - adjWidth, y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight), pixelWidth, pixelHeight);
             }
         }
         if (c == cWidth) {
@@ -80,6 +99,10 @@ function drawCel(loop, cel, x, y) {
         }
     }
     hexCyc++;
+    if (reDraw) {
+        reDraw = 0;
+        updateDraw();
+    }
 }
 
 function animate() {
