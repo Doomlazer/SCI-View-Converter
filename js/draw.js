@@ -45,7 +45,7 @@ function drawCel(loop, cel, x, y) {
         var color = parseInt(theCel[i], 10);
         var curCol = sciPalette[color];
         ctx.fillStyle = rgb(curCol[1], curCol[2], curCol[3]);
-        ctx.font = hexFntSize + "px arial";
+        ctx.font = hexFntSize + "px SQ3font";
 
         var pX = (x+ (xOff*pixelWidth) + cRow - adjWidth);
         var pY = (y + (yOff*pixelHeight) + cColumn - (cHeight*pixelHeight));
